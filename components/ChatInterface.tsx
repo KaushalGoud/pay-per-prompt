@@ -5,24 +5,18 @@ import { Message, StatusStep, Transaction } from "@/lib/types";
 import { MessageBubble } from "./MessageBubble";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send } from "lucide-react";
+import { fetchWithPayment } from "@/lib/x402-hedera-client";
+import { decodePaymentResponseHeader } from "@x402/fetch";
 
 interface ChatInterfaceProps {
   messages: Message[];
   onNewMessage: (message: Message, transaction?: Transaction) => void;
 }
 
-const STATUS_STEPS: { step: StatusStep; label: string }[] = [
-  { step: "sending", label: "Sending question..." },
-  { step: "payment-required", label: "Payment required (0.1 HBAR)" },
-  { step: "paying", label: "Paying on Hedera testnet..." },
-  { step: "generating", label: "Payment confirmed, generating answer..." },
-];
-
 export function ChatInterface({ messages, onNewMessage }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<StatusStep | null>(null);
-  const [statusIndex, setStatusIndex] = useState(0);
+  const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -48,52 +42,39 @@ export function ChatInterface({ messages, onNewMessage }: ChatInterfaceProps) {
 
     setInput("");
     setIsLoading(true);
-    setStatusIndex(0);
-    setCurrentStatus("sending");
+    setCurrentStatus("Paying on Hedera testnet & generating answer...");
 
     try {
-      // Step 1: ask without payment — expect a 402 challenge
-      const challengeRes = await fetch("/api/ask", {
+      // One call: fetchWithPayment handles 402 → sign → retry internally
+      const response = await fetchWithPayment("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: userMessage.content }),
       });
 
-      if (challengeRes.status !== 402) {
-        const data = await challengeRes.json();
-        throw new Error(data.error || "Expected a payment challenge.");
-      }
+      const data = await response.json();
 
-      const challenge = await challengeRes.json();
-      const requirements = challenge.accepts[0];
-
-      setCurrentStatus("paying");
-
-      // Step 2: sign the payment client-side
-      const { createSignedPayment } = await import("@/lib/client-wallet");
-      const paymentPayload = await createSignedPayment(requirements);
-      const encodedPayment = Buffer.from(
-        JSON.stringify(paymentPayload),
-      ).toString("base64");
-
-      setCurrentStatus("generating");
-
-      // Step 3: retry with the signed payment attached
-      const finalRes = await fetch("/api/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-PAYMENT": encodedPayment,
-        },
-        body: JSON.stringify({ question: userMessage.content }),
-      });
-
-      const data = await finalRes.json();
-
-      if (!finalRes.ok) {
+      if (!response.ok) {
         throw new Error(data.error || "Unable to get a response.");
       }
 
+      // Pull real settlement details from the PAYMENT-RESPONSE header
+    let paymentAmount: string | undefined;
+    let txId: string | undefined;
+
+    const paymentResponseHeader =
+      response.headers.get("PAYMENT-RESPONSE") ||
+      response.headers.get("payment-response");
+
+    if (paymentResponseHeader) {
+      const decoded = decodePaymentResponseHeader(paymentResponseHeader) as any;
+      if (decoded?.transaction) {
+        const [account, timePart] = decoded.transaction.split("@");
+        const [seconds, nanos] = timePart.split(".");
+        txId = `${account}-${seconds}-${nanos}`;
+      }
+      paymentAmount = process.env.NEXT_PUBLIC_PRICE_HBAR || "0.1";
+    }
       const aiMessage: Message = {
         id: `msg-${Date.now() + 1}`,
         role: "assistant",
@@ -101,20 +82,19 @@ export function ChatInterface({ messages, onNewMessage }: ChatInterfaceProps) {
           typeof data.answer === "string" && data.answer.trim()
             ? data.answer
             : "No response was returned.",
-        paymentAmount: data.paymentAmount,
-        txId: data.txId,
+        paymentAmount,
+        txId,
         timestamp: Date.now(),
       };
 
-      const transaction =
-        data.paymentAmount && data.txId
-          ? {
-              id: `tx-${Date.now()}`,
-              timestamp: Date.now(),
-              amount: data.paymentAmount,
-              txId: data.txId,
-            }
-          : undefined;
+      const transaction = txId
+        ? {
+            id: `tx-${Date.now()}`,
+            timestamp: Date.now(),
+            amount: paymentAmount ?? "0.1",
+            txId,
+          }
+        : undefined;
 
       onNewMessage(aiMessage, transaction);
     } catch (error) {
@@ -133,7 +113,6 @@ export function ChatInterface({ messages, onNewMessage }: ChatInterfaceProps) {
     } finally {
       setIsLoading(false);
       setCurrentStatus(null);
-      setStatusIndex(0);
     }
   };
 
@@ -162,10 +141,7 @@ export function ChatInterface({ messages, onNewMessage }: ChatInterfaceProps) {
             <div className="flex-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                 <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                <span>
-                  {STATUS_STEPS.find((s) => s.step === currentStatus)?.label ??
-                    "Working..."}
-                </span>
+                <span>{currentStatus}</span>
               </div>
             </div>
           </div>
