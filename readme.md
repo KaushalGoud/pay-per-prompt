@@ -73,6 +73,7 @@ Hedera's x402 `exact` scheme uses a **fee-payer delegation** pattern: the client
 ---
 
 ## 📁 Project Structure
+```
 pay-per-prompt/
 ├── app/
 │ ├── api/ask/route.ts # withX402-wrapped resource server
@@ -88,6 +89,7 @@ pay-per-prompt/
 │ ├── x402-hedera-client.ts # Client signer + wrapFetchWithPayment
 │ └── types.ts
 └── .env # Hedera + AI provider config (not committed)
+```
 ---
 
 ## 🚀 Getting Started
