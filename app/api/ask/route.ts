@@ -53,13 +53,14 @@ const handler = async (
     },
   );
 
-  if (!aiRes.ok) {
-    return NextResponse.json(
-      { error: "Unable to generate a response from the AI provider." },
-      { status: aiRes.status },
-    );
-  }
-
+if (!aiRes.ok) {
+  const errBody = await aiRes.text();
+  console.error("AI provider error:", aiRes.status, errBody);
+  return NextResponse.json(
+    { error: "Unable to generate a response from the AI provider." },
+    { status: aiRes.status },
+  );
+}
   const data = await aiRes.json();
   const answer = data?.choices?.[0]?.message?.content?.trim();
   if (!answer) {
