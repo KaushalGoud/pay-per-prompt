@@ -1,43 +1,32 @@
 {
-  "name": "my-project",
-  "version": "0.1.0",
+  "name": "pay-per-prompt",
+  "version": "1.0.0",
+  "description": "Pay-per-prompt AI on Hedera: every answer is settled with an HTS HBAR payment via the x402 exact scheme, logged to a public HCS audit ledger, with the ledger topic pinned by a deployed Solidity registry. Next.js + Hardhat monorepo.",
+  "license": "MIT",
   "private": true,
-  "packageManager": "pnpm@10.18.2",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint ."
+  "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": ">=20.18.3"
   },
-  "dependencies": {
-    "@base-ui/react": "^1.5.0",
-    "@hashgraph/sdk": "^2.81.0",
-    "@vercel/analytics": "1.6.1",
-    "@x402/core": "^2.19.0",
-    "@x402/fetch": "^2.19.0",
-    "@x402/hedera": "^2.19.0",
-    "@x402/next": "^2.19.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.16.0",
-    "next": "16.2.6",
-    "react": "^19",
-    "react-dom": "^19",
-    "shadcn": "^4.8.0",
-    "tailwind-merge": "^3.3.1",
-    "tw-animate-css": "^1.4.0"
+  "workspaces": [
+    "packages/contracts",
+    "packages/frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @pay-per-prompt/frontend",
+    "build": "npm run build -w @pay-per-prompt/frontend",
+    "start": "npm run start -w @pay-per-prompt/frontend",
+    "lint": "npm run lint -w @pay-per-prompt/frontend && npm run lint -w @pay-per-prompt/contracts",
+    "typecheck": "npm run typecheck -w @pay-per-prompt/frontend && npm run typecheck -w @pay-per-prompt/contracts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "compile": "npm run compile -w @pay-per-prompt/contracts",
+    "test": "npm run test -w @pay-per-prompt/contracts",
+    "test:testnet": "npm run test:testnet -w @pay-per-prompt/contracts",
+    "setup:hedera": "npm run setup -w @pay-per-prompt/contracts",
+    "deploy:registry": "npm run deploy -w @pay-per-prompt/contracts"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.2.0",
-    "@types/node": "^24",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "postcss": "^8.5",
-    "tailwindcss": "^4.2.0",
-    "tsx": "^4.23.1",
-    "typescript": "5.7.3"
-  },
-  "overrides": {
-    "hono": "4.12.25"
+    "prettier": "^3.3.3"
   }
 }

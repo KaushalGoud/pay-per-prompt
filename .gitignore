@@ -1,16 +1,24 @@
-# v0 sandbox internal files
-__v0_runtime_loader.js
-__v0_devtools.tsx
-__v0_jsx-dev-runtime.ts
-.snowflake/
-.v0-trash/
-.vercel/
+# Dependencies
+node_modules/
 
-# Environment variables
-
-
-# Common ignores
-node_modules
+# Next.js build output
 .next/
-.DS_Store.env
+out/
+
+# Environment secrets — never commit real keys
 .env
+.env.*
+!.env.example
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Hardhat artifacts
+artifacts/
+cache/
+coverage/
+typechain-types/
+
+# Misc
+.DS_Store
+*.log

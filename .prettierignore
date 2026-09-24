@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+artifacts
+cache
+coverage
+package-lock.json
+.env
+.env.*
+public/*.png
+public/*.jpg
+public/*.svg
+*.tsbuildinfo

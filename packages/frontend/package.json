@@ -1,0 +1,52 @@
+{
+  "name": "@pay-per-prompt/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next.js app for pay-per-prompt: per-question AI answers paid for with HBAR via x402, audited on an HCS ledger pinned on-chain.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.18.3"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write 'app/**/*.{ts,tsx,css}' 'components/**/*.{ts,tsx}' 'lib/**/*.ts' 'eslint.config.mjs' 'next.config.mjs'"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.5.0",
+    "@hashgraph/sdk": "^2.81.0",
+    "@vercel/analytics": "1.6.1",
+    "@x402/core": "^2.19.0",
+    "@x402/fetch": "^2.19.0",
+    "@x402/hedera": "^2.19.0",
+    "@x402/next": "^2.19.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
+    "lucide-react": "^1.16.0",
+    "next": "16.2.6",
+    "protobufjs": "^7.5.4",
+    "react": "^19",
+    "react-dom": "^19",
+    "shadcn": "^4.8.0",
+    "tailwind-merge": "^3.3.1",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.0",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9.9.0",
+    "eslint-config-next": "16.2.6",
+    "postcss": "^8.5",
+    "tailwindcss": "^4.2.0",
+    "typescript": "5.7.3"
+  },
+  "overrides": {
+    "hono": "4.12.25"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "name": "pay-per-prompt",
+  "description": "Pay-per-prompt AI chat on Hedera. Every answer is settled with a native HTS HBAR payment through the x402 exact scheme, appended to a public HCS audit ledger, and the ledger topic is pinned by a deployed Solidity registry. The endpoint fails closed if the HCS append or the on-chain registry lookup fails, so the Hedera services are load-bearing, not decorative. Next.js + Hardhat monorepo.",
+  "version": "1.0.0",
+  "create-scaffold-hbar": {
+    "capabilities": {
+      "frontend": ["nextjs-app"],
+      "solidityFramework": ["hardhat"],
+      "packageManager": ["npm"]
+    },
+    "defaults": {
+      "frontend": "nextjs-app",
+      "solidityFramework": "hardhat",
+      "packageManager": "npm"
+    },
+    "requirements": {
+      "node": ">=20.18.3"
+    },
+    "envVars": [
+      {
+        "key": "HEDERA_ACCOUNT_ID",
+        "description": "Server-side operator account (0.0.x). Pays the HCS submit fee and deploys the registry."
+      },
+      { "key": "HEDERA_PRIVATE_KEY", "description": "ECDSA private key (hex) for the operator account. Never commit." },
+      { "key": "HEDERA_NETWORK", "description": "Hedera network: testnet or mainnet." },
+      { "key": "HEDERA_MIRROR_NODE_URL", "description": "Mirror node REST base URL for the chosen network." },
+      { "key": "HEDERA_TOPIC_ID", "description": "HCS topic (0.0.x) used as the public pay-per-prompt ledger." },
+      {
+        "key": "HEDERA_CONTRACT_ID",
+        "description": "Deployed LedgerRegistry contract id that pins the HCS topic on-chain."
+      },
+      { "key": "RECEIVER_ACCOUNT_ID", "description": "Account each prompt payment settles to (x402 exact / HTS)." },
+      { "key": "PRICE_HBAR", "description": "Price per prompt in HBAR (e.g. 0.01)." },
+      { "key": "BLOCKY402_FEE_PAYER", "description": "Fee-payer account id exposed by the x402 facilitator." },
+      { "key": "X402_FACILITATOR_URL", "description": "x402 facilitator base URL for testnet settlements." },
+      {
+        "key": "NEXT_PUBLIC_HEDERA_CLIENT_ACCOUNT_ID",
+        "description": "Public demo signer account that authorizes the HBAR payment in the browser."
+      },
+      {
+        "key": "NEXT_PUBLIC_HEDERA_CLIENT_PRIVATE_KEY",
+        "description": "Public demo signer key (testnet only). Replace with a real wallet for production."
+      },
+      { "key": "NEXT_PUBLIC_PRICE_HBAR", "description": "Client-side copy of PRICE_HBAR used by the UI." },
+      { "key": "OPENAI_API_KEY", "description": "API key for any OpenAI-compatible chat completions endpoint." },
+      { "key": "OPENAI_MODEL", "description": "Model id, e.g. gpt-4o-mini (any OpenAI-compatible model)." },
+      { "key": "OPENAI_BASE_URL", "description": "Base URL, e.g. https://api.groq.com/openai/v1." }
+    ],
+    "outro": {
+      "installCommand": "npm install",
+      "sections": [
+        {
+          "title": "Next steps",
+          "steps": [
+            {
+              "label": "1. Configure secrets",
+              "command": "cp .env.example .env",
+              "text": "Fill in the operator, receiver and demo client accounts. Fund the operator and client accounts with testnet HBAR from https://portal.hedera.com/faucet."
+            },
+            {
+              "label": "2. Create the HCS ledger topic + deploy the registry",
+              "command": "{run:setup:hedera}",
+              "text": "Idempotent: creates the 0.0.x topic and deploys LedgerRegistry, then prints HEDERA_TOPIC_ID and HEDERA_CONTRACT_ID to paste into .env."
+            },
+            {
+              "label": "3. Submit a sample HCS record",
+              "command": "{run:test:testnet}",
+              "text": "Writes a test pay-per-prompt/ledger record to the topic so you can see it on HashScan."
+            },
+            { "label": "4. Run contract tests", "command": "{run:test}" },
+            {
+              "label": "5. Start the app",
+              "command": "{run:dev}",
+              "url": "http://localhost:3000"
+            },
+            {
+              "label": "Verify the flow",
+              "text": "Ask a question. A real HTS payment settles through x402 and the prompt is appended to the HCS ledger — the UI shows a HashScan link for the payment and one for the ledger message."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
