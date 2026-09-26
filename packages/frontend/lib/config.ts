@@ -16,6 +16,8 @@ export interface ServerConfig {
   feePayerAccountId: string | null;
   topicId: string | null;
   contractId: string | null;
+  pricingContractId: string | null;
+  chainlinkPriceFeedAddress: string | null;
   operatorAccountId: string | null;
   operatorPrivateKey: string | null;
   aiApiKey: string | null;
@@ -50,6 +52,8 @@ export function getServerConfig(): ServerConfig {
     feePayerAccountId: process.env.BLOCKY402_FEE_PAYER?.trim() || null,
     topicId: process.env.HEDERA_TOPIC_ID?.trim() || null,
     contractId: process.env.HEDERA_CONTRACT_ID?.trim() || null,
+    pricingContractId: process.env.HEDERA_PRICING_CONTRACT_ID?.trim() || null,
+    chainlinkPriceFeedAddress: process.env.CHAINLINK_PRICE_FEED?.trim() || null,
     operatorAccountId: process.env.HEDERA_ACCOUNT_ID?.trim() || null,
     operatorPrivateKey: process.env.HEDERA_PRIVATE_KEY?.replace(/^0x/i, "") || null,
     aiApiKey: process.env.OPENAI_API_KEY?.trim() || null,

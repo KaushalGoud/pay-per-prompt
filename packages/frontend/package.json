@@ -2,7 +2,7 @@
   "name": "@pay-per-prompt/frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Next.js app for pay-per-prompt: per-question AI answers paid for with HBAR via x402, audited on an HCS ledger pinned on-chain.",
+  "description": "Next.js app for pay-per-prompt: per-question AI answers priced on-chain at the Chainlink HBAR/USD rate, paid for with HBAR via x402, audited on an HCS ledger pinned on-chain.",
   "license": "MIT",
   "engines": {
     "node": ">=20.18.3"

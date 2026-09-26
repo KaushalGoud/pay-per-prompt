@@ -1,6 +1,6 @@
 {
   "name": "pay-per-prompt",
-  "description": "Pay-per-prompt AI chat on Hedera. Every answer is settled with a native HTS HBAR payment through the x402 exact scheme, appended to a public HCS audit ledger, and the ledger topic is pinned by a deployed Solidity registry. The endpoint fails closed if the HCS append or the on-chain registry lookup fails, so the Hedera services are load-bearing, not decorative. Next.js + Hardhat monorepo.",
+  "description": "Pay-per-prompt AI chat on Hedera. Every answer is settled with a native HTS HBAR payment through the x402 exact scheme, priced against the live Chainlink HBAR/USD oracle on-chain, and appended to a public HCS audit ledger whose topic is pinned by a deployed Solidity registry. The endpoint fails closed if the HCS append, the on-chain registry lookup, or the Chainlink price gate fails, so the Hedera and Chainlink services are load-bearing, not decorative. Next.js + Hardhat monorepo.",
   "version": "1.0.0",
   "create-scaffold-hbar": {
     "capabilities": {
@@ -28,6 +28,22 @@
       {
         "key": "HEDERA_CONTRACT_ID",
         "description": "Deployed LedgerRegistry contract id that pins the HCS topic on-chain."
+      },
+      {
+        "key": "HEDERA_PRICING_CONTRACT_ID",
+        "description": "Deployed ChainlinkPricing contract id that enforces the Chainlink HBAR/USD fair-price floor on every prompt."
+      },
+      {
+        "key": "CHAINLINK_PRICE_FEED",
+        "description": "Chainlink HBAR/USD AggregatorV3 EVM address on Hedera testnet (live: 0x59bC...92B4a)."
+      },
+      {
+        "key": "PRICING_MAX_STALE_SECONDS",
+        "description": "Feed freshness window before the pricing gate fails closed (default 3600)."
+      },
+      {
+        "key": "PRICING_MIN_USD_MICROS",
+        "description": "Minimum prompt payment value in micro-USD (USD*1e6) enforced by the gate (default 500)."
       },
       { "key": "RECEIVER_ACCOUNT_ID", "description": "Account each prompt payment settles to (x402 exact / HTS)." },
       { "key": "PRICE_HBAR", "description": "Price per prompt in HBAR (e.g. 0.01)." },
@@ -58,9 +74,9 @@
               "text": "Fill in the operator, receiver and demo client accounts. Fund the operator and client accounts with testnet HBAR from https://portal.hedera.com/faucet."
             },
             {
-              "label": "2. Create the HCS ledger topic + deploy the registry",
+              "label": "2. Create the HCS ledger topic + deploy the registry and Chainlink price gate",
               "command": "{run:setup:hedera}",
-              "text": "Idempotent: creates the 0.0.x topic and deploys LedgerRegistry, then prints HEDERA_TOPIC_ID and HEDERA_CONTRACT_ID to paste into .env."
+              "text": "Idempotent: creates the 0.0.x topic, deploys LedgerRegistry and ChainlinkPricing (Chainlink HBAR/USD), then prints HEDERA_TOPIC_ID, HEDERA_CONTRACT_ID and HEDERA_PRICING_CONTRACT_ID to paste into .env."
             },
             {
               "label": "3. Submit a sample HCS record",
@@ -75,7 +91,7 @@
             },
             {
               "label": "Verify the flow",
-              "text": "Ask a question. A real HTS payment settles through x402 and the prompt is appended to the HCS ledger — the UI shows a HashScan link for the payment and one for the ledger message."
+              "text": "Ask a question. The prompt is priced on-chain at the live Chainlink HBAR/USD rate, a real HTS payment settles through x402, and the prompt is appended to the HCS ledger — the UI shows a HashScan link for the payment and one for the ledger message."
             }
           ]
         }

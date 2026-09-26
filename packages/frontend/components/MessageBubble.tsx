@@ -45,6 +45,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 <span className="text-accent font-semibold">{message.ledger.sequenceNumber}</span>
               </span>
             </p>
+            {typeof message.ledger.priceUsdMicros === "number" && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Chainlink-priced at{" "}
+                <span className="text-accent font-semibold">
+                  ${(message.ledger.priceUsdMicros / 1_000_000).toFixed(6)}
+                </span>{" "}
+                via HBAR/USD on-chain
+              </p>
+            )}
             <div className="mt-1.5 flex items-center gap-3 text-xs">
               <a
                 href={message.ledger.hashscanUrl}

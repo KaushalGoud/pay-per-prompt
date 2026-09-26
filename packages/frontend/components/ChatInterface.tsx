@@ -15,6 +15,11 @@ interface ChatInterfaceProps {
 
 interface AskResponseData {
   answer?: string;
+  pricing?: {
+    usdMicros: number;
+    rateUsdMicrosPerHbar: number;
+    roundId: number;
+  };
   ledger?: {
     topicId: string;
     sequenceNumber: number;
@@ -95,6 +100,8 @@ export function ChatInterface({ messages, onNewMessage }: ChatInterfaceProps) {
             sequenceNumber: data.ledger.sequenceNumber,
             mirrorUrl: data.ledger.mirrorUrl,
             hashscanUrl: data.ledger.hashscanUrl,
+            priceUsdMicros: data.pricing?.usdMicros,
+            priceFeedRateUsdMicrosPerHbar: data.pricing?.rateUsdMicrosPerHbar,
           }
         : undefined;
 

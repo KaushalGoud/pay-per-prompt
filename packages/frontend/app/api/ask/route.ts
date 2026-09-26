@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { withX402 } from "@x402/next";
 import { resourceServer } from "@/lib/x402-server";
 import { generateAnswer } from "@/lib/ai";
-import { appendLedgerRecord, newInteractionId } from "@/lib/hedera-ledger";
+import { appendLedgerRecord, newInteractionId, resolvePricingGate } from "@/lib/hedera-ledger";
 import { getServerConfig } from "@/lib/config";
 
 export interface AskResponse {
   answer: string;
+  pricing?: {
+    usdMicros: number;
+    rateUsdMicrosPerHbar: number;
+    roundId: number;
+  };
   ledger?: {
     topicId: string;
     sequenceNumber: number;
@@ -37,11 +42,40 @@ const handler = async (request: NextRequest): Promise<NextResponse<{ error: stri
 
   const interactionId = newInteractionId();
 
+  let pricing: { usdMicros: number; rateUsdMicrosPerHbar: number; roundId: number };
+  try {
+    const gate = await resolvePricingGate(config, config.priceTinybar);
+    pricing = { usdMicros: gate.usdMicros, rateUsdMicrosPerHbar: gate.rateUsdMicrosPerHbar, roundId: gate.roundId };
+    if (!gate.passed) {
+      return NextResponse.json(
+        {
+          error: `The prompt price (${gate.usdMicros} micro-USD ≈ $${(gate.usdMicros / 1_000_000).toFixed(6)}) does not meet the on-chain Chainlink fair-price floor, cancelling.`,
+        },
+        { status: 503 },
+      );
+    }
+  } catch (err) {
+    console.error("Chainlink pricing gate failed — refusing to serve:", err);
+    return NextResponse.json(
+      {
+        error:
+          "The on-chain price oracle is unreachable or stale, so the payment cannot be priced. " +
+          "The prompt was cancelled.",
+      },
+      { status: 503 },
+    );
+  }
+
   const answer = await generateAnswer(question);
 
   try {
-    const ledger = await appendLedgerRecord({ question, interactionId });
-    return NextResponse.json({ answer, ledger });
+    const ledger = await appendLedgerRecord({
+      question,
+      interactionId,
+      priceUsdMicros: pricing.usdMicros,
+      priceFeedRateUsdMicrosPerHbar: pricing.rateUsdMicrosPerHbar,
+    });
+    return NextResponse.json({ answer, pricing, ledger });
   } catch (err) {
     console.error("HCS ledger append failed — refusing to settle:", err);
     return NextResponse.json(

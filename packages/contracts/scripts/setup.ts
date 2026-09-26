@@ -2,11 +2,15 @@ import { artifacts } from "hardhat";
 import { ContractCreateFlow, ContractFunctionParameters, TopicCreateTransaction } from "@hashgraph/sdk";
 import { extractNumericId, networkShortName, operatorClient } from "./lib/sdk";
 
+const DEFAULT_CHAINLINK_FEED = "0x59bC155EB6c6C415fE43255aF66EcF0523c92B4a"; // HBAR/USD on Hedera testnet
+
 /**
- * One-shot provisioning for the two load-bearing Hedera services:
+ * One-shot provisioning for the three load-bearing Hedera services:
  *   1. Creates the HCS ledger topic when HEDERA_TOPIC_ID is not set.
  *   2. Deploys the LedgerRegistry contract (pinning the topic) when
  *      HEDERA_CONTRACT_ID is not set.
+ *   3. Deploys the ChainlinkPricing fair-price gate (Chainlink HBAR/USD)
+ *      when HEDERA_PRICING_CONTRACT_ID is not set.
  * Prints the exact .env lines to copy. Re-running is safe — already-set
  * values are left untouched.
  */
@@ -49,12 +53,39 @@ async function main() {
     console.log(`Using existing HEDERA_CONTRACT_ID=${contractIdRaw}`);
   }
 
+  let pricingContractIdRaw = process.env.HEDERA_PRICING_CONTRACT_ID?.trim();
+  if (!pricingContractIdRaw) {
+    console.log("HEDERA_PRICING_CONTRACT_ID not set — deploying ChainlinkPricing...");
+    const artifact = await artifacts.readArtifact("ChainlinkPricing");
+    const feed = process.env.CHAINLINK_PRICE_FEED?.trim() || DEFAULT_CHAINLINK_FEED;
+    const staleness = Number(process.env.PRICING_MAX_STALE_SECONDS?.trim() || "3600");
+    const minUsdMicros = Number(process.env.PRICING_MIN_USD_MICROS?.trim() || "500");
+    const pricingDeployTx = new ContractCreateFlow()
+      .setBytecode(artifact.bytecode)
+      .setGas(600_000)
+      .setMaxChunks(20)
+      .setConstructorParameters(
+        new ContractFunctionParameters().addAddress(feed).addUint256(staleness).addUint256(minUsdMicros),
+      );
+    const pricingDeployResponse = await pricingDeployTx.execute(client);
+    const pricingDeployReceipt = await pricingDeployResponse.getReceipt(client);
+    if (!pricingDeployReceipt.contractId) {
+      throw new Error("Contract create receipt did not include a contract id.");
+    }
+    pricingContractIdRaw = pricingDeployReceipt.contractId.toString();
+    console.log(`Deployed ChainlinkPricing ${pricingContractIdRaw} ✅`);
+  } else {
+    console.log(`Using existing HEDERA_PRICING_CONTRACT_ID=${pricingContractIdRaw}`);
+  }
+
   console.log(`\nAdd these to your .env:\n`);
   console.log(`  HEDERA_TOPIC_ID=${topicIdRaw}`);
   console.log(`  HEDERA_CONTRACT_ID=${contractIdRaw}`);
+  console.log(`  HEDERA_PRICING_CONTRACT_ID=${pricingContractIdRaw}`);
   console.log(`\nLinks:`);
-  console.log(`  Topic:     https://hashscan.io/${network}/topic/${topicIdRaw}`);
-  console.log(`  Contract:  https://hashscan.io/${network}/contract/${contractIdRaw}`);
+  console.log(`  Topic:      https://hashscan.io/${network}/topic/${topicIdRaw}`);
+  console.log(`  Registry:   https://hashscan.io/${network}/contract/${contractIdRaw}`);
+  console.log(`  Pricing:    https://hashscan.io/${network}/contract/${pricingContractIdRaw}`);
 
   client.close();
 }

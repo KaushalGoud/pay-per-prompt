@@ -5,21 +5,26 @@ Guidance for AI agents (and humans) working in this repository.
 ## What this is
 
 A scaffold-hbar template: a Next.js + Hardhat monorepo for a pay-per-prompt AI app on Hedera testnet.
-Every prompt is (1) paid for with HBAR through x402 (exact scheme, Blocky402 facilitator), and (2) appended
-to a public HCS audit ledger whose topic id is pinned on-chain by `LedgerRegistry.sol`.
+Every prompt is (1) priced on-chain against the live **Chainlink HBAR/USD** oracle, (2) paid for with HBAR
+through x402 (exact scheme, Blocky402 facilitator), and (3) appended to a public HCS audit ledger whose topic
+id is pinned on-chain by `LedgerRegistry.sol`.
 
-The Hedera integration is **load-bearing**, not decorative:
+The Hedera + Chainlink integration is **load-bearing**, not decorative:
 
+- `packages/frontend/app/api/ask/route.ts` consults `ChainlinkPricing.paymentGate()` (`ContractCallQuery`)
+  **before** generating an answer; a revert (stale/silent feed), or a value below the on-chain USD floor,
+  returns `503` and `withX402` treats `>= 400` responses as "cancel — do not settle". No oracle, no prompt.
 - `packages/frontend/app/api/ask/route.ts` appends to HCS **before** returning the answer; an append failure
   returns `502`, and `withX402` treats `>= 400` responses as "cancel — do not settle".
 - The server resolves the ledger topic from the deployed contract (`ContractCallQuery topicId()`) and fails
   closed on any mismatch with `HEDERA_TOPIC_ID`.
+- Feed address, staleness window and USD floor are frozen in `ChainlinkPricing`'s immutables at deploy time.
 
 ## Repo layout
 
 ```
 template.json             # scaffold-hbar manifest (capabilities / defaults / envVars / outro)
-packages/contracts/       # Hardhat + @hashgraph/sdk: LedgerRegistry.sol + scripts + test
+packages/contracts/       # Hardhat + @hashgraph/sdk: LedgerRegistry.sol + ChainlinkPricing.sol + scripts + test
 packages/frontend/        # Next.js App Router: /api/ask, /api/health, /api/ledger, UI
 .env.example              # single source of truth for env var docs (repo-root .env)
 ```
@@ -30,18 +35,19 @@ dirs.
 
 ## Commands (from repo root, npm workspaces)
 
-| Task                                 | Command                                                                 |
-| ------------------------------------ | ----------------------------------------------------------------------- |
-| Install                              | `npm install`                                                           |
-| Dev server                           | `npm run dev` (http://localhost:3000)                                   |
-| Build                                | `npm run build`                                                         |
-| Lint                                 | `npm run lint`                                                          |
-| Typecheck                            | `npm run typecheck`                                                     |
-| Format                               | `npm run format` (root prettier) — **required** by the scaffold CLI run |
-| Contracts test (offline)             | `npm run test`                                                          |
-| Provision testnet (topic + registry) | `npm run setup:hedera`                                                  |
-| Deploy registry alone                | `npm run deploy:registry`                                               |
-| Submit a sample HCS record           | `npm run test:testnet`                                                  |
+| Task                                              | Command                                                                 |
+| ------------------------------------------------- | ----------------------------------------------------------------------- |
+| Install                                           | `npm install`                                                           |
+| Dev server                                        | `npm run dev` (http://localhost:3000)                                   |
+| Build                                             | `npm run build`                                                         |
+| Lint                                              | `npm run lint`                                                          |
+| Typecheck                                         | `npm run typecheck`                                                     |
+| Format                                            | `npm run format` (root prettier) — **required** by the scaffold CLI run |
+| Contracts test (offline)                          | `npm run test`                                                          |
+| Provision testnet (topic + registry + price gate) | `npm run setup:hedera`                                                  |
+| Deploy registry alone                             | `npm run deploy:registry`                                               |
+| Deploy price gate alone                           | `npm run deploy:pricing`                                                |
+| Submit a sample HCS record                        | `npm run test:testnet`                                                  |
 
 ## Conventions
 

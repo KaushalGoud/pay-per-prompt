@@ -4,6 +4,7 @@ import {
   PrivateKey,
   ContractId,
   ContractCallQuery,
+  ContractFunctionParameters,
   TopicMessageSubmitTransaction,
   TopicId,
 } from "@hashgraph/sdk";
@@ -29,6 +30,13 @@ export interface LedgerEntry {
   consensusTimestamp: string | null;
   record: Record<string, unknown> | null;
   rawContents: string;
+}
+
+export interface PricingGateResult {
+  passed: boolean;
+  usdMicros: number;
+  roundId: number;
+  rateUsdMicrosPerHbar: number;
 }
 
 const MIRROR_RETRY_ATTEMPTS = 8;
@@ -119,9 +127,53 @@ export async function resolveLedgerTopic(config: ReturnType<typeof getServerConf
   );
 }
 
+/**
+ * Consults the on-chain Chainlink fair-price gate for a payment. Load-bearing:
+ * the ask handler runs this BEFORE generating an answer, and any failure
+ * (unset contract, healthy-oracle revert, or a value below the on-chain USD
+ * floor) is treated by the caller as "cancel — do not settle".
+ */
+export async function resolvePricingGate(
+  config: ReturnType<typeof getServerConfig>,
+  amountTinybar: number,
+): Promise<PricingGateResult> {
+  if (!config.pricingContractId) {
+    throw new Error(
+      "HEDERA_PRICING_CONTRACT_ID is not set. The Chainlink fair-price gate is load-bearing; " +
+        "run `npm run setup:hedera` to deploy ChainlinkPricing.",
+    );
+  }
+  const client = buildOperatorClient(config);
+  try {
+    const contractId = ContractId.fromString(config.pricingContractId);
+
+    const gate = await new ContractCallQuery()
+      .setContractId(contractId)
+      .setGas(300_000)
+      .setFunction("paymentGate", new ContractFunctionParameters().addUint64(amountTinybar))
+      .execute(client);
+    const passed = gate.getBool(0) ?? false;
+    const usdMicros = gate.getUint256(1)?.toNumber() ?? 0;
+
+    const health = await new ContractCallQuery()
+      .setContractId(contractId)
+      .setGas(300_000)
+      .setFunction("feedHealth")
+      .execute(client);
+    const roundId = health.getUint256(0)?.toNumber() ?? 0;
+    const rateUsdMicrosPerHbar = health.getUint256(2)?.toNumber() ?? 0;
+
+    return { passed, usdMicros, roundId, rateUsdMicrosPerHbar };
+  } finally {
+    client.close();
+  }
+}
+
 interface AppendLedgerInput {
   question: string;
   interactionId: string;
+  priceUsdMicros?: number;
+  priceFeedRateUsdMicrosPerHbar?: number;
 }
 
 /**
@@ -137,13 +189,20 @@ export async function appendLedgerRecord(input: AppendLedgerInput): Promise<Ledg
     const resolved = await resolveLedgerTopic(config);
     const promptHash = createHash("sha256").update(input.question).digest("hex");
     const record = {
-      v: 1,
+      v: 2,
       type: "pay-per-prompt/fulfilment",
       interactionId: input.interactionId,
       promptHash,
       amountTinybar: config.priceTinybar,
       recipient: config.receiverAccountId,
       model: config.aiModel,
+      ...(input.priceUsdMicros !== undefined
+        ? {
+            priceSource: "chainlink" as const,
+            priceUsdMicros: input.priceUsdMicros,
+            priceFeedRateUsdMicrosPerHbar: input.priceFeedRateUsdMicrosPerHbar,
+          }
+        : {}),
       status: "delivered",
       at: new Date().toISOString(),
     };

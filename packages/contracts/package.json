@@ -2,7 +2,7 @@
   "name": "@pay-per-prompt/contracts",
   "version": "1.0.0",
   "private": true,
-  "description": "Solidity half of the pay-per-prompt template: LedgerRegistry pins the HCS topic used to audit every fulfilled prompt.",
+  "description": "Solidity half of the pay-per-prompt template: LedgerRegistry pins the HCS topic used to audit every fulfilled prompt, and ChainlinkPricing enforces the Chainlink HBAR/USD fair-price gate on chain.",
   "license": "MIT",
   "engines": {
     "node": ">=20.18.3"
@@ -16,6 +16,7 @@
     "format": "prettier --write 'contracts/**/*.sol' 'scripts/**/*.ts' 'test/**/*.ts'",
     "create-topic": "hardhat run scripts/create-topic.ts --network hederaTestnet",
     "deploy": "hardhat compile && hardhat run scripts/deploy-ledger-registry.ts --network hederaTestnet",
+    "deploy:pricing": "hardhat compile && hardhat run scripts/deploy-chainlink-pricing.ts --network hederaTestnet",
     "submit-message": "hardhat run scripts/submit-test-message.ts --network hederaTestnet",
     "setup": "hardhat compile && hardhat run scripts/setup.ts --network hederaTestnet"
   },

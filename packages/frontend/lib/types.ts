@@ -5,6 +5,8 @@ export interface LedgerProof {
   sequenceNumber: number;
   mirrorUrl: string;
   hashscanUrl: string;
+  priceUsdMicros?: number;
+  priceFeedRateUsdMicrosPerHbar?: number;
 }
 
 export interface Message {
