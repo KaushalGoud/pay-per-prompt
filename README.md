@@ -38,7 +38,7 @@ HCS ledger entry (both shown with HashScan + mirror-node links in the UI).
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | HCS ledger topic                 | `0.0.10696735` — https://hashscan.io/testnet/topic/0.0.10696735                                               |
 | On-chain anchor (registry)       | `0.0.10696739` — https://hashscan.io/testnet/contract/0.0.10696739                                            |
-| Chainlink fair-price gate        | `0.0.10730509` — https://hashscan.io/testnet/contract/0.0.10730509                                            |
+| Chainlink fair-price gatee       | `0.0.10730509` — https://hashscan.io/testnet/contract/0.0.10730509                                            |
 | Chainlink HBAR/USD feed (live)   | `0x59bC155EB6c6C415fE43255aF66EcF0523c92B4a` — 8 decimals, round updated within the 1h freshness window       |
 | Sample HCS record (seq 1)        | https://hashscan.io/testnet/topic/0.0.10696735/message/1                                                      |
 | Real settled payment             | `0.0.7162784-1790258955-089794902` — https://hashscan.io/testnet/transaction/0.0.7162784-1790258955-089794902 |
