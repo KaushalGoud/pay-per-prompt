@@ -38,8 +38,8 @@ HCS ledger entry (both shown with HashScan + mirror-node links in the UI).
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | HCS ledger topic                 | `0.0.10696735` — https://hashscan.io/testnet/topic/0.0.10696735                                               |
 | On-chain anchor (registry)       | `0.0.10696739` — https://hashscan.io/testnet/contract/0.0.10696739                                            |
-| Chainlink fair-price gatee       | `0.0.10730509` — https://hashscan.io/testnet/contract/0.0.10730509                                            |
-| Chainlink HBAR/USD feed (live)   | `0x59bC155EB6c6C415fE43255aF66EcF0523c92B4a` — 8 decimals, round updated within the 1h freshness window       |
+| Chainlink fair-price gate        | `0.0.10747266` — https://hashscan.io/testnet/contract/0.0.10747266                                            |
+| Chainlink HBAR/USD feed (live)   | `0x59bC155EB6c6C415fE43255aF66EcF0523c92B4a` — 8 decimals, round refreshed within the 3h freshness window       |
 | Sample HCS record (seq 1)        | https://hashscan.io/testnet/topic/0.0.10696735/message/1                                                      |
 | Real settled payment             | `0.0.7162784-1790258955-089794902` — https://hashscan.io/testnet/transaction/0.0.7162784-1790258955-089794902 |
 | Real HCS record (seq 2)          | https://hashscan.io/testnet/topic/0.0.10696735/message/2                                                      |
@@ -52,7 +52,7 @@ The payment txs show exactly `0.0.9567368 −1,000,000` → `0.0.7932544 +1,000,
 `amountTinybar` in the HCS records. Records 8 and 9 are priced **on-chain** with
 `priceSource:"chainlink", priceUsdMicros:932, priceFeedRateUsdMicrosPerHbar:93244` — the ledger, the money and the
 live oracle all agree. Seq 9 was produced by a **freshly scaffolded copy** of this template (proving the CLI
-flow end to end). The gate is a live on-chain read (`eth_call paymentGate/feedHealth` against `0.0.10730509`,
+flow end to end). The gate is a live on-chain read (`eth_call paymentGate/feedHealth` against `0.0.10747266`,
 or `ContractCallQuery` from the app), so anyone can re-verify it against HashIO JSON-RPC.
 
 ## 🚀 One-command scaffold
@@ -92,7 +92,7 @@ Copy `.env.example` → `.env` at the repo root. Both packages read it explicitl
 | `HEDERA_CONTRACT_ID`                                  | `LedgerRegistry` contract (deployed by `setup:hedera`)   | yes\*                          |
 | `HEDERA_PRICING_CONTRACT_ID`                          | `ChainlinkPricing` contract (deployed by `setup:hedera`) | yes\*                          |
 | `CHAINLINK_PRICE_FEED`                                | Chainlink HBAR/USD AggregatorV3 address on testnet       | no (default testnet feed)      |
-| `PRICING_MAX_STALE_SECONDS`                           | Feed freshness window before the gate fails closed       | no (default `3600`)            |
+| `PRICING_MAX_STALE_SECONDS`                           | Feed freshness window before the gate fails closed       | no (default `10800` = 3h)       |
 | `PRICING_MIN_USD_MICROS`                              | On-chain USD floor per prompt (USD·10⁻⁶)                 | no (default `500`)             |
 | `RECEIVER_ACCOUNT_ID`                                 | Account that collects HBAR payments                      | yes                            |
 | `PRICE_HBAR`                                          | Price per prompt (default `0.01`)                        | no                             |

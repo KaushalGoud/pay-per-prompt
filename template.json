@@ -39,7 +39,7 @@
       },
       {
         "key": "PRICING_MAX_STALE_SECONDS",
-        "description": "Feed freshness window before the pricing gate fails closed (default 3600)."
+        "description": "Feed freshness window before the pricing gate fails closed (default 10800 = 3h, covers the testnet feed's hourly heartbeat)."
       },
       {
         "key": "PRICING_MIN_USD_MICROS",

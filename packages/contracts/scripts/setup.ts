@@ -58,7 +58,7 @@ async function main() {
     console.log("HEDERA_PRICING_CONTRACT_ID not set — deploying ChainlinkPricing...");
     const artifact = await artifacts.readArtifact("ChainlinkPricing");
     const feed = process.env.CHAINLINK_PRICE_FEED?.trim() || DEFAULT_CHAINLINK_FEED;
-    const staleness = Number(process.env.PRICING_MAX_STALE_SECONDS?.trim() || "3600");
+    const staleness = Number(process.env.PRICING_MAX_STALE_SECONDS?.trim() || "10800");
     const minUsdMicros = Number(process.env.PRICING_MIN_USD_MICROS?.trim() || "500");
     const pricingDeployTx = new ContractCreateFlow()
       .setBytecode(artifact.bytecode)

@@ -8,7 +8,7 @@ async function main() {
   const { client, network } = operatorClient();
 
   const feed = process.env.CHAINLINK_PRICE_FEED?.trim() || DEFAULT_FEED;
-  const staleness = Number(process.env.PRICING_MAX_STALE_SECONDS?.trim() || "3600");
+  const staleness = Number(process.env.PRICING_MAX_STALE_SECONDS?.trim() || "10800");
   const minUsdMicros = Number(process.env.PRICING_MIN_USD_MICROS?.trim() || "500");
 
   console.log(`Reading compiled artifact for ChainlinkPricing...`);
