@@ -70,3 +70,14 @@ dirs.
 - After touching shared configs, run `npm run lint && npm run typecheck && npm run test && npm run build`
   before finishing. Fix, don't silence.
 - Real testnet runs cost/consume HBAR; only run provisioning when a funded operator is present.
+
+## How to adapt this template
+
+To turn this into a different pay-per-request service, change only:
+
+- `packages/frontend/lib/ai.ts` — replace the service being sold.
+- `.env` values `PRICE_HBAR`, `PRICING_MIN_USD_MICROS`, `RECEIVER_ACCOUNT_ID`.
+- The record fields in `lib/hedera-ledger.ts` — log service-specific data.
+
+Do not remove the HCS append, the registry check, or the Chainlink gate. The app is designed to fail closed
+without them.

@@ -11,6 +11,27 @@ This repository is structured as a [scaffold-hbar](https://github.com/hedera-dev
 `packages/contracts` (Hardhat + Solidity + Hedera SDK scripts) and `packages/frontend` (Next.js App Router),
 plus a `template.json` manifest so it can be bootstrapped with a single command.
 
+## 👩‍💻 Who uses this, and how
+
+Who it's for: any developer who wants to charge per request for something (an AI answer, an API call, a
+report, a data lookup) and wants customers to be able to verify the price and the receipt without trusting
+the seller.
+
+Example: Priya sells AI resume reviews.
+
+- She runs `npm create scaffold-hbar@latest -- --template KaushalGoud/pay-per-prompt`.
+- She runs `npm run setup:hedera`. This creates her own HCS audit topic and deploys her own registry and
+  Chainlink price gate.
+- She sets `RECEIVER_ACCOUNT_ID` to her account and `PRICE_HBAR` to her price.
+- She replaces the AI call in `packages/frontend/lib/ai.ts` with her resume-review logic.
+- She runs `npm run dev`. Her customers now pay per review in HBAR, priced fairly against the live Chainlink
+  rate, with a public HashScan receipt for every review.
+
+What she did not have to build: x402 payment gating, an audit ledger, on-chain anchoring, or the oracle
+price gate.
+
+Other uses: pay-per-call APIs, pay-per-image generation, paid document analysis, and paid data feeds.
+
 ## 🪙 The load-bearing services
 
 Four ecosystem services are genuinely load-bearing — the app refuses to work without them:
